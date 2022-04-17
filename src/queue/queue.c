@@ -41,21 +41,17 @@ int empty_q(queue q){
 }
 
 void push(queue q, int new_pid){
-    printf("pushed:%d\n",new_pid);
     q->no_of_nodes+=1;
+    node new_node = malloc(sizeof(struct queuenode));
+    new_node->pid = new_pid;
+    new_node->next = NULL;
     if(q->head == NULL){
-        node new_node = malloc(sizeof(struct queuenode));
-        new_node->pid = new_pid;
-        new_node->next = NULL;
         q->head = new_node;
         return;
     }
     node temp = q->head;
     while(temp->next)
         temp = temp->next;
-    node new_node = malloc(sizeof(struct queuenode));
-    new_node->pid = new_pid;
-    new_node->next = NULL;
     temp->next = new_node;
     return;
 }

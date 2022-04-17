@@ -21,5 +21,6 @@ all: $(PROGRAMS)
 # Delete executable & object files
 clean:
 	rm -f sniffer
+	rm -f named_pipes/*
 	find . -name '*.o' -print | xargs rm -f
 	rm -rf $(ODIR)
