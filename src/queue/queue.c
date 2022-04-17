@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "queue.h"
 
 struct queue_struct{
@@ -24,8 +25,12 @@ int pop(queue q){
     node to_be_freed = q->head;
     q->head = q->head->next;
     free(to_be_freed);
-    q->no_of_nodes--;
+    q->no_of_nodes-=1;
     return ret;
+}
+
+int get_no_of_nodes(queue q){
+    return q->no_of_nodes;
 }
 
 int empty_q(queue q){
@@ -36,7 +41,8 @@ int empty_q(queue q){
 }
 
 void push(queue q, int new_pid){
-    q->no_of_nodes++;
+    printf("pushed:%d\n",new_pid);
+    q->no_of_nodes+=1;
     if(q->head == NULL){
         node new_node = malloc(sizeof(struct queuenode));
         new_node->pid = new_pid;
@@ -55,6 +61,8 @@ void push(queue q, int new_pid){
 }
 
 void destroy_q(queue q){
+    if(q == NULL)
+        return;
     node curr = q->head;
     node prev;
     while(curr){
