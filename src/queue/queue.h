@@ -13,8 +13,5 @@ void push(queue q, int new_pid);
 //Returns 1 if the queue is emptyy or zero if it has elements in it
 int empty_q(queue q);
 
-//Returns the number of nodes in the queue
-int get_no_of_nodes(queue q);
-
 //deallocates resources and destroys the queue
 void destroy_q(queue q);

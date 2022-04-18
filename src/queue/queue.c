@@ -12,12 +12,14 @@ struct queuenode{
     node next;
 };
 
+//Initializes a queue
 queue init_q(void){
     queue q = malloc(sizeof(struct queue_struct));
     q->no_of_nodes = 0;
     q->head = NULL;
 }
 
+//Returns the PID at the head of the queue and frees that node
 int pop(queue q){
     if(q->no_of_nodes == 0 /*empty*/)
         return -1;
@@ -29,10 +31,7 @@ int pop(queue q){
     return ret;
 }
 
-int get_no_of_nodes(queue q){
-    return q->no_of_nodes;
-}
-
+//returns 1 if queue is empty
 int empty_q(queue q){
     if(q->no_of_nodes == 0)
         return 1;
@@ -40,6 +39,7 @@ int empty_q(queue q){
         return 0;
 }
 
+//make a new node given a pid and pushes that to the end of the queue
 void push(queue q, int new_pid){
     q->no_of_nodes+=1;
     node new_node = malloc(sizeof(struct queuenode));
@@ -56,6 +56,7 @@ void push(queue q, int new_pid){
     return;
 }
 
+//Frees all the allocated space used for the queue
 void destroy_q(queue q){
     if(q == NULL)
         return;

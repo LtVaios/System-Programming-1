@@ -3,13 +3,13 @@
 #include <stdlib.h> 
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sys/inotify.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <errno.h>
-#include "manager.h"
+
+#include "worker.h"
 
 
 int main(int argc, char *argv[]) {
@@ -41,9 +41,13 @@ int main(int argc, char *argv[]) {
         //copying the filename without the last ' and now we have the filenamed of the file we added, stored in "filename"
         strncpy(filename, strtok(file_str_ptr, quote_char), strlen(file_str_ptr)+1);
         printf("child %d got file:%s\n",getpid(),filename);
+        //Send stop signal to yourself
         kill(getpid(), SIGSTOP);
     }
     close(fd);
+    free(pipename);
+    free(file_str_ptr);
+    free(filename);
 }
 
 static void WorkerSIGINTHandler(int sig) {

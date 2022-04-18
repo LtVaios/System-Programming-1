@@ -80,9 +80,6 @@ int main(int argc, char *argv[]) {
     }
     //manager code
     else {
-        //Creating a named pipe
-        int temp, flag=0;
-
         //Queue initialization
         q = init_q();
 
@@ -100,67 +97,70 @@ int main(int argc, char *argv[]) {
         char* tmp_text = malloc(1024);
         const char s[2] = "\n";
         const char quote_char[2] = "'";
-        char* file_str_ptr = malloc(100);
-        char* filename = malloc(100);
-        char reader[1024];
         char writer[1024];
         char buffer[100];
-        pid_t worker_pid, temp_pid;
+        pid_t new_worker_pid, curr_worker_pid;
         char* pipename = malloc(100);
 
+        //Connecting the manager with the signal handlers (SIGCHLD, SIGINT)
+        signal(SIGINT, ManagerSIGINTHandler);
+        signal(SIGCHLD, ManagerSIGCHLDHandler);
 
         while (1) { 
-            signal(SIGINT, ManagerSIGINTHandler);
-            signal(SIGCHLD, ManagerSIGCHLDHandler);
+            //Reading from the listener pipe
             ssize_t ret = read(listener_pipe[0], writer, BUFSIZE);
             strcpy(tmp_text, writer);
             if (ret == -1)
                 continue;
+            //Programm functionality
             else {
-                //Programm functionality here
+                //We make a loop with strtok here because inotifywait() might send one big message including a lot of notifications 
+                //if we drag&drop a lot of files into the monitored directory so we need to check them all
                 while((token = strtok_r(tmp_text, "\n", &tmp_text)) != NULL){
                     //I've noticed that in some cases when we drag&drop >1 files into watched folder, inotifywait() adds some junk characters after all the file notifications
                     //So the valid notifications look like 'MOVED_TO file' or 'CREATE file' ,if we se something else we break the loop
                     if((strncmp(token, "'M", 2) != 0) && (strncmp(token, "'C", 2) != 0))
                         break;
-                  
-                    temp_pid = pop(q);
+                    
+                    curr_worker_pid = pop(q);
                     //if we have no available workers we must make some
-                    if(temp_pid == -1){        
-                        if ((worker_pid = fork()) < 0) {
+                    if(curr_worker_pid == -1){        
+                        if ((new_worker_pid = fork()) < 0) {
                             perror("Error! Could not fork");
                             exit(EXIT_FAILURE);
                         }
-                        //worker code
-                        if(worker_pid == 0){
-                            if (execl("./worker", "123", NULL) < 0) {
+                        //worker exec
+                        if(new_worker_pid == 0){
+                            if (execl("./worker", "EMPTY", NULL) < 0) {
                                 perror("Error! exec failed");
                                 exit(EXIT_FAILURE);
                             }
                         }
+                        //we make a new named pipe with that worker's PID named worker_pipe_PID
+                        //and the manager will communicate with that worker only through this pipe
                         strcpy(pipename, _PIPE_);
-                        sprintf(buffer, "%d", worker_pid);
+                        sprintf(buffer, "%d", new_worker_pid);
                         strcat(pipename, buffer);
                         if(mkfifo(pipename, 0666) != 0)
                             printf("Error creating named pipe or it already exists.\n");
-                        temp_pid = worker_pid;
+                        curr_worker_pid = new_worker_pid;
                     }
-                    //If the queue is not empty then we take the first available worker and send SIGCONT
+                    //We manipulate strings to make the appropriate named pipe filename so we talk with the right worker
                     strcpy(pipename, _PIPE_);
-                    sprintf(buffer, "%d", temp_pid);
+                    sprintf(buffer, "%d", curr_worker_pid);
                     strcat(pipename, buffer); 
                     fd = open(pipename, O_CREAT|O_RDWR);
-                    //printf("i write %s in %s\n",token,pipename);
                     if(write(fd, token, strlen(token)+1) == -1 && errno != EINTR)
                         printf("Error writing in named pipe.\n");
-                    //close(fd);
-                    kill(temp_pid, SIGCONT); 
+                    //we wrote in the worker's named pipe and now we send SIGCONT to that worker
+                    kill(curr_worker_pid, SIGCONT); 
                 }
             }
         }
     }
 }
 
+//This handler manages SIGCHLD signals received from workers and just pushes them back to the queue
 static void ManagerSIGCHLDHandler(int sig) {
     while(1){
         int stat;
@@ -183,6 +183,7 @@ static void ListenerSIGINTHandler(int sig) {
 static void ManagerSIGINTHandler(int sig) {
     printf("\n");
     int child_pid;
+    //close the pipe we used to communicate with the listener
     close(listener_pipe[0]);
     //killng all workers
     while( empty_q(q) != 1 ) {
