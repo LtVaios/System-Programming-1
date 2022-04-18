@@ -4,6 +4,7 @@ ODIR = build
 	
 OBJS = manager.o
 OBJS += queue.o
+OBJS += worker.o
 
 # Compilers
 CC  = gcc
@@ -12,11 +13,14 @@ CC  = gcc
 CFLAGS = -O3 -fPIC -Wall -g
 
 all: $(PROGRAMS)
+	make clean
 	mkdir -p $(ODIR)
 	$(CC) -c $(SRC)/manager/manager.c
+	$(CC) -c $(SRC)/manager/worker.c
 	$(CC) -c $(SRC)/queue/queue.c
 	mv $(OBJS) $(ODIR)
 	$(CC) $(CFLAGS) $(ODIR)/queue.o  $(ODIR)/manager.o -o sniffer
+	$(CC) $(CFLAGS) $(ODIR)/queue.o  $(ODIR)/worker.o -o worker
 
 # Delete executable & object files
 clean:

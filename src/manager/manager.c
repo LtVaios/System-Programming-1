@@ -81,9 +81,7 @@ int main(int argc, char *argv[]) {
     //manager code
     else {
         //Creating a named pipe
-        int fd, temp, temp_pid, flag=0;
-        if(mkfifo(_PIPE_, 0666) != 0)
-            printf("Error creating named pipe or it already exists.\n");
+        int temp, flag=0;
 
         //Queue initialization
         q = init_q();
@@ -98,7 +96,7 @@ int main(int argc, char *argv[]) {
         // sigaction(SIGCHLD, &sa, NULL);
 
         //rest variables
-        char* token;
+        char* token = malloc (100);
         char* tmp_text = malloc(1024);
         const char s[2] = "\n";
         const char quote_char[2] = "'";
@@ -106,7 +104,10 @@ int main(int argc, char *argv[]) {
         char* filename = malloc(100);
         char reader[1024];
         char writer[1024];
-        int worker_pid;
+        char buffer[100];
+        pid_t worker_pid, temp_pid;
+        char* pipename = malloc(100);
+
 
         while (1) { 
             signal(SIGINT, ManagerSIGINTHandler);
@@ -122,47 +123,38 @@ int main(int argc, char *argv[]) {
                     //So the valid notifications look like 'MOVED_TO file' or 'CREATE file' ,if we se something else we break the loop
                     if((strncmp(token, "'M", 2) != 0) && (strncmp(token, "'C", 2) != 0))
                         break;
-
-                    fd = open(_PIPE_, O_CREAT|O_RDWR);
-                    if(write(fd, token, strlen(token)+1) == -1)
-                        printf("Error writing in named pipe.\n");
-                    close(fd);
-                    
+                  
+                    temp_pid = pop(q);
                     //if we have no available workers we must make some
-                    if(empty_q(q)){
+                    if(temp_pid == -1){        
                         if ((worker_pid = fork()) < 0) {
                             perror("Error! Could not fork");
                             exit(EXIT_FAILURE);
                         }
                         //worker code
                         if(worker_pid == 0){
-                            signal(SIGINT,WorkerSIGINTHandler);
-                            while(1){
-                                //Opening the named pipe that is connected to the manager to get the message sent by inotifywait which we then store inside "reader"
-                                fd = open(_PIPE_, O_CREAT|O_RDWR);
-                                temp=read(fd, reader, sizeof(reader));
-                                if(temp == -1)
-                                    printf("Error reading from named pipe.\n");
-                                reader[temp] = '\0';
-                                close(fd);
-
-                                //exctracting the filename from the inotify message which looks like: 'MOVED_TO test.txt'
-                                //taking a pointer to the first space
-                                file_str_ptr = strchr(reader, ' ');
-                                //skiping the space character
-                                file_str_ptr++;
-                                //copying the filename without the last ' and now we have the filenamed of the file we added, stored in "filename"
-                                strncpy(filename, strtok(file_str_ptr, quote_char), strlen(file_str_ptr)+1);
-                                printf("child %d got file:%s\n",getpid(),filename);
-                                kill(getpid(), SIGSTOP);
+                            if (execl("./worker", "123", NULL) < 0) {
+                                perror("Error! exec failed");
+                                exit(EXIT_FAILURE);
                             }
                         }
+                        strcpy(pipename, _PIPE_);
+                        sprintf(buffer, "%d", worker_pid);
+                        strcat(pipename, buffer);
+                        if(mkfifo(pipename, 0666) != 0)
+                            printf("Error creating named pipe or it already exists.\n");
+                        temp_pid = worker_pid;
                     }
                     //If the queue is not empty then we take the first available worker and send SIGCONT
-                    else{
-                        temp_pid = pop(q);
-                        kill(temp_pid, SIGCONT);  
-                    }
+                    strcpy(pipename, _PIPE_);
+                    sprintf(buffer, "%d", temp_pid);
+                    strcat(pipename, buffer); 
+                    fd = open(pipename, O_CREAT|O_RDWR);
+                    //printf("i write %s in %s\n",token,pipename);
+                    if(write(fd, token, strlen(token)+1) == -1 && errno != EINTR)
+                        printf("Error writing in named pipe.\n");
+                    //close(fd);
+                    kill(temp_pid, SIGCONT); 
                 }
             }
         }
@@ -170,7 +162,13 @@ int main(int argc, char *argv[]) {
 }
 
 static void ManagerSIGCHLDHandler(int sig) {
-    push(q,waitpid(-1, NULL, WNOHANG));
+    while(1){
+        int stat;
+        int chld = waitpid(-1, &stat, WUNTRACED | WNOHANG);
+        if(chld <= 0)
+            break;
+        push(q, chld);
+    }
 }
 
 
@@ -178,10 +176,6 @@ static void ManagerSIGCHLDHandler(int sig) {
 static void ListenerSIGINTHandler(int sig) {
     kill(notify_pid, SIGKILL);
     //printf("\n");
-    exit(1);
-}
-
-static void WorkerSIGINTHandler(int sig) {
     exit(1);
 }
 
@@ -197,5 +191,6 @@ static void ManagerSIGINTHandler(int sig) {
     }
     //freeing the queue
     destroy_q(q);
+    close(fd);
     exit(1);
 }
