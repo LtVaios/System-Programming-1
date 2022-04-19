@@ -72,9 +72,6 @@ int process_file(char* path, char* file){
     strcpy(write_to, file);
     strcat(write_to, ".out");
 
-    // printf("read_from: %s\n",read_from);
-    // printf("write to: %s\n",write_to);
-    // printf("process file: %s\n",file);
     fd_read = open(read_from, O_RDWR);
 
     set s = init_set();
@@ -133,7 +130,6 @@ int process_file(char* path, char* file){
             }
         }
     }
-    printf("mpainw\n");
     write_all_to_file(s ,write_to);
     free(read_from);
     free(write_to);
