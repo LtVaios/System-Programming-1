@@ -5,6 +5,7 @@
         "signal.h": "c",
         "queue.h": "c",
         "manager.h": "c",
-        "worker.h": "c"
+        "worker.h": "c",
+        "cstddef": "c"
     }
 }

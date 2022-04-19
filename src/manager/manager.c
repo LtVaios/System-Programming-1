@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
                         }
                         //worker exec
                         if(new_worker_pid == 0){
-                            if (execl("./worker", "EMPTY", NULL) < 0) {
+                            if (execl("./worker", path, NULL) < 0) {
                                 perror("Error! exec failed");
                                 exit(EXIT_FAILURE);
                             }
