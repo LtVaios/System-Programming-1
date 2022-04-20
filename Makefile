@@ -28,7 +28,7 @@ all: $(PROGRAMS)
 clean:
 	rm -f sniffer
 	rm -f worker
-	rm -f named_pipes/*
-	rm -f output_files/*
+	rm -f named_pipes/worker*
+	rm -f output_files/*.out
 	find . -name '*.o' -print | xargs rm -f
 	rm -rf $(ODIR)

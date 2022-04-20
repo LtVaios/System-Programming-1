@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
         //copying the filename without the last ' and now we have the filenamed of the file we added, stored in "filename"
         strncpy(filename, strtok(file_str_ptr, quote_char), strlen(file_str_ptr)+1);
 
-        //printf("child %d got file:%s\n",getpid(),filename);
         process_file(pathname, filename);
 
         //Send stop signal to yourself
@@ -65,6 +64,9 @@ int process_file(char* path, char* file){
     char byte;
     char buffer[1024];
 
+    char* fullpathname = malloc(256);
+    strcpy(fullpathname, "./output_files/");
+
     //configuring the files we need to read from and write to
     char* read_from = malloc(100);
     strcpy(read_from, path);
@@ -74,7 +76,15 @@ int process_file(char* path, char* file){
     strcpy(write_to, file);
     strcat(write_to, ".out");
     
+    strcat(fullpathname, write_to);
+    if (access(fullpathname, F_OK) != -1){
+        free(write_to);
+        free(read_from);
+        free(fullpathname);
+        return 0;
+    }
     fd_read = open(read_from, O_RDWR);
+    printf("File %s is ready.\n",write_to);
 
     set s = init_set();
     //In this loop we read the file byte-by-byte until the end of file and we filter out URLs
@@ -140,6 +150,7 @@ int process_file(char* path, char* file){
     write_all_to_file(s ,write_to);
     delete_set(s);
     free(read_from);
+    free(fullpathname);
     free(write_to);
 }
 

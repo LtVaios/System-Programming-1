@@ -121,7 +121,6 @@ int main(int argc, char *argv[]) {
                     //So the valid notifications look like 'MOVED_TO file' or 'CREATE file' ,if we se something else we break the loop
                     if((strncmp(token, "'M", 2) != 0) && (strncmp(token, "'C", 2) != 0))
                         break;
-                    printf("token: %s\n",token);
                     curr_worker_pid = pop(q);
                     //if we have no available workers we must make some
                     if(curr_worker_pid == -1){        
