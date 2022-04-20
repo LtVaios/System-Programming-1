@@ -112,36 +112,51 @@ int process_file(char* path, char* file){
                     if(byte != 'p')
                         continue;
                     else{
-                        //if the code reached this section it means that we read "http" from the file so it is a link
-                        flag = 0;
-                        //no we skip the next 7 characters which is "://www."
-                        for(int i=0 ; i<7 ; i++){
-                            if(byte == EOF){
-                                flag = 1;
-                                break;
-                            }
-                            temp=read(fd_read, &byte, 1);
-                            if(temp == -1 && errno != EINTR)
-                                printf("Error reading from file.\n");
+                        read(fd_read, &byte, 1);
+                        if(byte != ':')
                             continue;
+                        else{
+                            read(fd_read, &byte, 1);
+                            if(byte != '/')
+                                continue;
+                            else{
+                                read(fd_read, &byte, 1);
+                                if(byte != '/')
+                                    continue;
+                                else{
+                                    //if the code reached this section it means that we read "http" from the file so it is a link
+                                    flag = 0;
+                                    //no we skip the next 7 characters which is "://www."
+                                    for(int i=0 ; i<4 ; i++){
+                                        if(byte == EOF){
+                                            flag = 1;
+                                            break;
+                                        }
+                                        temp=read(fd_read, &byte, 1);
+                                        if(temp == -1 && errno != EINTR)
+                                            printf("Error reading from file.\n");
+                                        continue;
+                                    }
+                                    if(flag == 1)
+                                        break;
+                                    j = 0;
+                                    //clear buffer that holds the domains we find
+                                    memset(buffer, 0, 1024);
+                                    //In this loop we read until we find a slash or a space which means it is the end of the domain of the link
+                                    while(byte != '/' && byte != ' ' && byte != '\n'){
+                                        temp=read(fd_read, &byte, 1);
+                                        if(temp == -1 && errno != EINTR)
+                                            printf("Error reading from file.\n");
+                                        buffer[j] = byte;
+                                        j++;
+                                    }
+                                    //we get rid ot the last slash or space character
+                                    buffer[j-1] = '\0';
+                                    //we insert the domain we found into our list
+                                    set_insert(s, buffer);
+                                }
+                            }
                         }
-                        if(flag == 1)
-                            break;
-                        j = 0;
-                        //clear buffer that holds the domains we find
-                        memset(buffer, 0, 1024);
-                        //In this loop we read until we find a slash or a space which means it is the end of the domain of the link
-                        while(byte != '/' && byte != ' ' && byte != '\n'){
-                            temp=read(fd_read, &byte, 1);
-                            if(temp == -1 && errno != EINTR)
-                                printf("Error reading from file.\n");
-                            buffer[j] = byte;
-                            j++;
-                        }
-                        //we get rid ot the last slash or space character
-                        buffer[j-1] = '\0';
-                        //we insert the domain we found into our list
-                        set_insert(s, buffer);
                     }
                 }
             }
