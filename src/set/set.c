@@ -34,21 +34,22 @@ void set_insert(set s, char new_link[1024]){
     setnode new_setnode = malloc(sizeof(struct set_node));
     new_setnode->link = malloc(1024);
     strcpy(new_setnode->link, new_link);
+    new_setnode->next = NULL;
     if(s->head == NULL){
-        new_setnode->next = NULL;
         new_setnode->counter = 1;
         s->head = new_setnode;
         return;
     }
     else{
         setnode curr = s->head;
-        while(curr->next){
+        while(curr->next != NULL){
             if(strcmp(curr->link,new_link) == 0){
                 curr->counter++;
                 free(new_setnode->link);
                 free(new_setnode);
                 return;
             }
+            curr = curr->next;
         }
         new_setnode->counter = 1;
         curr->next = new_setnode;

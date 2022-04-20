@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     
     signal(SIGINT,WorkerSIGINTHandler);
     while(1){
+        
         //We manipulate strings to make the named pipe with this workers PID that is connected to the manager to get the message sent by inotifywait which we then store inside "reader"
         strcpy(pipename, _PIPE_);
         sprintf(buffer, "%d", getpid());
@@ -81,7 +82,7 @@ int process_file(char* path, char* file){
         if(temp == 0)
             break;
         if(temp == -1 && errno != EINTR){
-            printf("Error reading from file.111\n");
+            printf("Error reading from file\n");
             break;
         }
         if(byte != 'h')
@@ -115,7 +116,7 @@ int process_file(char* path, char* file){
                         j = 0;
                         //clear buffer that holds the domains we find
                         memset(buffer, 0, 1024);
-                        while(byte != '/' && byte != ' '){
+                        while(byte != '/' && byte != ' ' && byte != '\n'){
                             temp=read(fd_read, &byte, 1);
                             if(temp == -1 && errno != EINTR)
                                 printf("Error reading from file.\n");
@@ -131,6 +132,7 @@ int process_file(char* path, char* file){
         }
     }
     write_all_to_file(s ,write_to);
+    delete_set(s);
     free(read_from);
     free(write_to);
 }

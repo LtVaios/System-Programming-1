@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[]) {
     //Programm arguments checking
-    char* path = malloc(sizeof(argv[2]));
+    path = malloc(sizeof(argv[2]));
     strcpy(path, "./");
     if(argc == 1){
         printf("Default path is now current file.\n");
@@ -83,24 +83,16 @@ int main(int argc, char *argv[]) {
         //Queue initialization
         q = init_q();
 
-        //sigaction struct initialise to handle SIGCHLD signals
-        // struct sigaction sa;
-        // sa.sa_handler = ManagerSIGCHLDHandler;
-        // sa.sa_flags = 0;
-        // sigset_t set;
-        // sigemptyset(&set);
-        // sa.sa_mask = set;
-        // sigaction(SIGCHLD, &sa, NULL);
-
         //rest variables
-        char* token = malloc (100);
-        char* tmp_text = malloc(1024);
+        token = malloc (100);
+        tmp_text = malloc(1024);
+        pipename = malloc(100);
         const char s[2] = "\n";
         const char quote_char[2] = "'";
         char writer[1024];
         char buffer[100];
         pid_t new_worker_pid, curr_worker_pid;
-        char* pipename = malloc(100);
+        
 
         //Connecting the manager with the signal handlers (SIGCHLD, SIGINT)
         signal(SIGINT, ManagerSIGINTHandler);
@@ -192,6 +184,13 @@ static void ManagerSIGINTHandler(int sig) {
     }
     //freeing the queue
     destroy_q(q);
-    close(fd);
+    //printf("edw1\n");
+    //free(tmp_text);
+    //printf("edw2\n");
+    //free(pipename);
+    //printf("edw3\n");
+    //free(token);
+    //printf("edw4\n");
+    //free(path);
     exit(1);
 }
