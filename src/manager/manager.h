@@ -7,7 +7,8 @@ int notify_pid = -1;
 int listener_pipe[2];
 queue q;
 int fd;
-char* pipename, *tmp_text, *token, *path;
+//These are global so we can free them from the SIGINT handler
+char* pipename, *tmp_text_to_free, *path;
 
 static void ManagerSIGCHLDHandler(int sig);
 static void WorkerSIGINTHandler(int sig);

@@ -20,26 +20,29 @@ int main(int argc, char *argv[]) {
         printf("Default path is now current file.\n");
     }
     else{
-        if(strcmp(argv[1],"[-p") != 0){
+        if(strcmp(argv[1],"-p") != 0){
             printf("Unknown flag, default path is now current file.\n");
         }
-        char* ptr = argv[2];
-        int counter = 0;
-        int flag = 0;
-        while(ptr){
-            if(*ptr == ']'){
-                flag = 1;
-                break;
+        else {
+            char* ptr = argv[2];
+            int counter = 0;
+            int flag = 0;
+            while(ptr){
+                if(*ptr == '\0' || *ptr == ' '){
+                    flag = 1;
+                    break;
+                }
+                ptr++;
+                counter++;
             }
-            ptr++;
-            counter++;
+            if(flag == 1){
+                strncpy(path, argv[2], counter);
+                strcat(path, "/");
+            }
+            else
+                printf("Unknown argument syntax, default path is now the current file.\n");
         }
-        if(flag == 1)
-            strncpy(path, argv[2], counter);
-        else
-            printf("Unknown argument syntax, default path is now the current file.\n");
     }
-
     //Pipe that connects manager and listener initialization
     if (pipe(listener_pipe) < 0){
         exit(1);
@@ -67,7 +70,7 @@ int main(int argc, char *argv[]) {
             }
             close(listener_pipe[1]);
             close(listener_pipe[0]);
-            char* args[] = {"inotifywait", "-m", "-e", "moved_to,create", "--format", "'%:e %f'",path, NULL};
+            char* args[] = {"inotifywait", "-m", "-e", "moved_to","-e","create", "--format", "'%:e %f'",path, NULL};
             if (execvp("inotifywait", args) < 0) {
                 perror("Error! exec failed");
                 exit(EXIT_FAILURE);
@@ -84,9 +87,14 @@ int main(int argc, char *argv[]) {
         q = init_q();
 
         //rest variables
-        token = malloc (100);
-        tmp_text = malloc(1024);
         pipename = malloc(100);
+
+        //We use 2 pointer variables here because the first is the one returned by malloc so we can free it later 
+        //Also we use the second because we need to move the pointer with strtok
+        tmp_text_to_free = malloc(1024);
+        char* tmp_text = tmp_text_to_free;
+
+        char* token;
         const char s[2] = "\n";
         const char quote_char[2] = "'";
         char writer[1024];
@@ -113,7 +121,7 @@ int main(int argc, char *argv[]) {
                     //So the valid notifications look like 'MOVED_TO file' or 'CREATE file' ,if we se something else we break the loop
                     if((strncmp(token, "'M", 2) != 0) && (strncmp(token, "'C", 2) != 0))
                         break;
-                    
+                    printf("token: %s\n",token);
                     curr_worker_pid = pop(q);
                     //if we have no available workers we must make some
                     if(curr_worker_pid == -1){        
@@ -184,13 +192,8 @@ static void ManagerSIGINTHandler(int sig) {
     }
     //freeing the queue
     destroy_q(q);
-    //printf("edw1\n");
-    //free(tmp_text);
-    //printf("edw2\n");
-    //free(pipename);
-    //printf("edw3\n");
-    //free(token);
-    //printf("edw4\n");
-    //free(path);
+    free(tmp_text_to_free);
+    free(pipename);
+    free(path);
     exit(1);
 }

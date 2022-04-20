@@ -95,4 +95,5 @@ void write_all_to_file(set s, char* write_to){
             printf("Error writing in out file.\n");
         curr = curr->next;
     }
+    free(fullpath);
 }

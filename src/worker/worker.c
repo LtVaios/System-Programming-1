@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
         //copying the filename without the last ' and now we have the filenamed of the file we added, stored in "filename"
         strncpy(filename, strtok(file_str_ptr, quote_char), strlen(file_str_ptr)+1);
 
-        printf("child %d got file:%s\n",getpid(),filename);
+        //printf("child %d got file:%s\n",getpid(),filename);
         process_file(pathname, filename);
 
         //Send stop signal to yourself
@@ -65,6 +65,7 @@ int process_file(char* path, char* file){
     char byte;
     char buffer[1024];
 
+    //configuring the files we need to read from and write to
     char* read_from = malloc(100);
     strcpy(read_from, path);
     strcat(read_from, file);
@@ -72,17 +73,18 @@ int process_file(char* path, char* file){
     char* write_to = malloc(100);
     strcpy(write_to, file);
     strcat(write_to, ".out");
-
+    
     fd_read = open(read_from, O_RDWR);
 
     set s = init_set();
+    //In this loop we read the file byte-by-byte until the end of file and we filter out URLs
     while( 1 ){
         temp=read(fd_read, &byte, 1);
         //printf("byte %c\n",byte);
         if(temp == 0)
             break;
         if(temp == -1 && errno != EINTR){
-            printf("Error reading from file\n");
+            perror("Error");
             break;
         }
         if(byte != 'h')
@@ -100,7 +102,9 @@ int process_file(char* path, char* file){
                     if(byte != 'p')
                         continue;
                     else{
+                        //if the code reached this section it means that we read "http" from the file so it is a link
                         flag = 0;
+                        //no we skip the next 7 characters which is "://www."
                         for(int i=0 ; i<7 ; i++){
                             if(byte == EOF){
                                 flag = 1;
@@ -116,6 +120,7 @@ int process_file(char* path, char* file){
                         j = 0;
                         //clear buffer that holds the domains we find
                         memset(buffer, 0, 1024);
+                        //In this loop we read until we find a slash or a space which means it is the end of the domain of the link
                         while(byte != '/' && byte != ' ' && byte != '\n'){
                             temp=read(fd_read, &byte, 1);
                             if(temp == -1 && errno != EINTR)
@@ -125,6 +130,7 @@ int process_file(char* path, char* file){
                         }
                         //we get rid ot the last slash or space character
                         buffer[j-1] = '\0';
+                        //we insert the domain we found into our list
                         set_insert(s, buffer);
                     }
                 }
