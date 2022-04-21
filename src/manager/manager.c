@@ -163,6 +163,8 @@ int main(int argc, char *argv[]) {
 static void ManagerSIGCHLDHandler(int sig) {
     while(1){
         int stat;
+        //-1 means wait for any child, WNOHANG is to make the parent not wait here if there are no events
+        //WUNTRACED lets the parent return from waitpid() if a child has been stopped
         int chld = waitpid(-1, &stat, WUNTRACED | WNOHANG);
         if(chld <= 0)
             break;
