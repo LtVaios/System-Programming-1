@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
         char* token;
         const char s[2] = "\n";
         const char quote_char[2] = "'";
-        char writer[1024];
+        char writer[2048];
         char buffer[100];
         pid_t new_worker_pid, curr_worker_pid;
         
