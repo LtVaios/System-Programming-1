@@ -77,7 +77,7 @@ void delete_set(set s){
 //This function writes every domain that is listed with the number it appeared as we made it in worker.c
 void write_all_to_file(set s, char* write_to){
     char* fullpath = malloc(512);
-    char* temp;
+    char temp[32];
     //make full path to output files
     strcpy(fullpath, "./output_files/");
     strcat(fullpath, write_to);
